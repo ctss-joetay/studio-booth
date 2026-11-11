@@ -103,6 +103,7 @@ Practice mode can't show whether the AI keeps faces accurate. With a working key
    | `PUBLIC_URL` | the `https://…up.railway.app` address, used in QR codes |
    | `SEEDREAM_MODEL` | optional, `bytedance-seed/seedream-5-0-flash` by default |
    | `MAX_SHOTS_PER_HOUR` | optional, 150 by default: a cap on AI calls so a crowd can't run up the bill |
+   | `TZ` | `Asia/Singapore`, so the dates on Magazine covers and Polaroids are local |
 
 5. Under **Settings → Networking**, choose **Generate Domain**.
 6. Keep **one replica**: the booth's busy flag and the photos live on one server.
