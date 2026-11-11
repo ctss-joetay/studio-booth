@@ -120,8 +120,8 @@ doesn't show full bodies, the AI never invents legs or shoes (funbooth's finding
 
 **Groups:** any number of people works. About 1–5 is ideal, because faces get small beyond that. The frame
 shape follows how the camera is mounted:
-- camera upright (portrait): a 2:3 portrait photo, best for 1–2 people;
-- camera sideways (landscape): a 3:2 landscape photo, best for groups.
+- camera turned on its side: a 2:3 portrait photo, best for 1–2 people;
+- camera standing normally: a 3:2 landscape photo, best for groups.
 
 ## 6. What every AI request must say
 
@@ -178,7 +178,7 @@ Every prompt contains, in this order:
 - Students reach **Setup** by long-pressing the THE STUDIO brand line, then entering the PIN. Setup has:
   - **Camera:** a list of every camera the browser sees, such as "Canon EOS …", "Front Camera" and "Back Camera",
     with a live preview.
-  - **Camera mounting:** upright or sideways, as rotation 0 / 90 / 180 / 270°. It also decides portrait or
+  - **Camera mounting:** standing normally or on its side, as rotation 0 / 90 / 180 / 270°. It also decides portrait or
     landscape photos (§5).
   - **Mirror the live view** (on by default). The captured photo is never mirrored.
   - **Countdown seconds** (default 10).

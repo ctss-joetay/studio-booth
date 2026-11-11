@@ -51,6 +51,19 @@ export function CameraView({ deviceId, rotation, mirror, framing, hint = true, o
     return () => observer.disconnect();
   }, []);
 
+  // When a camera is plugged in again after failing, try again on its own.
+  const statusRef = useRef(status);
+  statusRef.current = status;
+  useEffect(() => {
+    const media = navigator.mediaDevices;
+    if (!media?.addEventListener) return;
+    const onChange = () => {
+      if (statusRef.current === "failed") setAttempt((n) => n + 1);
+    };
+    media.addEventListener("devicechange", onChange);
+    return () => media.removeEventListener("devicechange", onChange);
+  }, []);
+
   useEffect(() => {
     let stream: MediaStream | null = null;
     let cancelled = false;
@@ -74,6 +87,12 @@ export function CameraView({ deviceId, rotation, mirror, framing, hint = true, o
         setStatus("live");
         callbacks.current.onReady(el);
         const track = stream.getVideoTracks()[0];
+        // A camera unplugged mid-session ends its track: stop offering the button until it is back.
+        track?.addEventListener("ended", () => {
+          if (cancelled) return;
+          setStatus("failed");
+          callbacks.current.onReady(null);
+        });
         callbacks.current.onInfo?.({ label: track?.label ?? "Camera", width: el.videoWidth, height: el.videoHeight });
       } catch {
         if (cancelled) return;

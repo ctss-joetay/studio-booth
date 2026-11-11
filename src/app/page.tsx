@@ -50,6 +50,12 @@ export default function BoothPage() {
   const styles = STYLES.filter((s) => settings.enabledStyles.includes(s.id));
   const styleDef = getStyle(style);
 
+  /** The iPad keeps nothing of a guest once they're done: no capture to resend, no preview. */
+  const forgetCapture = useCallback(() => {
+    lastCapture.current = null;
+    setCaptureUrl(null);
+  }, []);
+
   const upload = useCallback(
     async (blob: Blob) => {
       setPhase("developing");
@@ -74,16 +80,18 @@ export default function BoothPage() {
           img.src = body.imageUrl!;
         });
         setShot(body as Shot);
+        forgetCapture();
         setPhase("result");
       } catch {
         setFailure({ message: "No connection. Check the iPad's Wi-Fi and try again." });
         setPhase("error");
       }
     },
-    [style, backdrop, framing, settings.eventName],
+    [style, backdrop, framing, settings.eventName, forgetCapture],
   );
 
   const capture = useCallback(async () => {
+    forgetCapture();
     setFlashKey((k) => k + 1);
     playShutter(audio.current);
     if (!video) {
@@ -99,7 +107,7 @@ export default function BoothPage() {
       setFailure({ message: "The camera couldn't take the photo. Try again." });
       setPhase("error");
     }
-  }, [video, settings.rotation, upload]);
+  }, [video, settings.rotation, upload, forgetCapture]);
 
   const startCountdown = () => {
     // A tap starts the audio, so the shutter can click when the countdown ends.
@@ -168,6 +176,7 @@ export default function BoothPage() {
           }}
           onDone={() => {
             forgetShot(false);
+            forgetCapture();
             setPhase("choose");
           }}
         />
@@ -177,7 +186,10 @@ export default function BoothPage() {
           message={failure.message}
           detail={failure.detail}
           onRetry={() => (lastCapture.current ? void upload(lastCapture.current) : setPhase("choose"))}
-          onStartOver={() => setPhase("choose")}
+          onStartOver={() => {
+            forgetCapture();
+            setPhase("choose");
+          }}
         />
       )}
       {phase === "locked" && <PinGate onUnlocked={() => setPhase("choose")} />}

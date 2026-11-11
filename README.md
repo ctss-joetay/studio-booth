@@ -62,7 +62,7 @@ npm run typecheck
 | Setting | What it does |
 |---|---|
 | Camera | Which camera the booth uses |
-| Camera mounting | **Upright:** portrait photos, best for 1–2 people. **Sideways:** landscape photos, best for groups. Choose the way the camera is turned on its stand. |
+| Camera mounting | How the camera sits on its stand. **Standing normally:** landscape photos, best for groups. **On its side:** portrait photos, best for 1–2 people. The live view always shows the photo's real shape. |
 | Mirror the live view | Guests see themselves as in a mirror. The photo itself is never mirrored. |
 | Countdown seconds | 10 by default |
 | Event name | Appears in the Magazine headlines and on Polaroid frames |

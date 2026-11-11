@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { AI_NOTICE } from "@/lib/copy";
+import { useIdle } from "./useIdle";
 
 export interface Shot {
   token: string;
@@ -10,25 +10,11 @@ export interface Shot {
   qrSvg: string;
 }
 
-const IDLE_MS = 2 * 60 * 1000;
+export const IDLE_MS = 2 * 60 * 1000;
 
 /** The finished portrait and the QR code guests scan. Goes back to the start after two idle minutes. */
 export function ResultScreen({ shot, onRetake, onDone }: { shot: Shot; onRetake: () => void; onDone: () => void }) {
-  const done = useRef(onDone);
-  done.current = onDone;
-
-  useEffect(() => {
-    let timer = setTimeout(() => done.current(), IDLE_MS);
-    const reset = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => done.current(), IDLE_MS);
-    };
-    window.addEventListener("pointerdown", reset);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener("pointerdown", reset);
-    };
-  }, []);
+  useIdle(IDLE_MS, onDone);
 
   return (
     <div

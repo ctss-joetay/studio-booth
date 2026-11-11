@@ -1,5 +1,11 @@
+"use client";
+
+import { IDLE_MS } from "./ResultScreen";
+import { useIdle } from "./useIdle";
+
 /** A photo that didn't develop: a plain message for guests and a small line for student helpers. */
 export function ErrorScreen({ message, detail, onRetry, onStartOver }: { message: string; detail?: string; onRetry: () => void; onStartOver: () => void }) {
+  useIdle(IDLE_MS, onStartOver);
   return (
     <div className="fade-in absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-noir px-6 text-center">
       <p className="kicker">THE STUDIO</p>

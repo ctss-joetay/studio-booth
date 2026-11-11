@@ -1,24 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-/** Saves the photo: the share sheet ("Save Image") where the phone supports it, a download everywhere else. */
+type Photo = { state: "loading" } | { state: "ready"; file: File } | { state: "gone" };
+
+/**
+ * Saves the photo: the share sheet ("Save Image") where the phone supports it, a download everywhere else. The photo
+ * is fetched when the page opens, so the share sheet opens straight from the tap (phones refuse it after a slow wait).
+ */
 export function SaveButton({ token }: { token: string }) {
-  const [busy, setBusy] = useState(false);
+  const [photo, setPhoto] = useState<Photo>({ state: "loading" });
+  const [showGone, setShowGone] = useState(false);
 
-  async function save() {
-    setBusy(true);
-    try {
-      const blob = await (await fetch(`/api/p/${token}/image`)).blob();
-      const file = new File([blob], "studio-portrait.jpg", { type: "image/jpeg" });
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "My studio portrait" });
-        return;
-      }
-    } catch (error) {
-      if ((error as Error).name === "AbortError") return;
-    } finally {
-      setBusy(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`/api/p/${token}/image`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(String(res.status));
+        const blob = await res.blob();
+        if (!cancelled) setPhoto({ state: "ready", file: new File([blob], "studio-portrait.jpg", { type: "image/jpeg" }) });
+      })
+      .catch(() => !cancelled && setPhoto({ state: "gone" }));
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  function save() {
+    if (photo.state === "gone") return setShowGone(true);
+    if (photo.state === "ready" && navigator.canShare?.({ files: [photo.file] })) {
+      navigator.share({ files: [photo.file], title: "My studio portrait" }).catch(() => undefined);
+      return;
     }
     const link = document.createElement("a");
     link.href = `/api/p/${token}/image?download=1`;
@@ -27,8 +39,15 @@ export function SaveButton({ token }: { token: string }) {
   }
 
   return (
-    <button type="button" onClick={save} disabled={busy} className="w-full rounded-[3px] bg-gold py-4 text-lg font-semibold tracking-[0.1em] text-noir">
-      {busy ? "Saving…" : "Save photo"}
-    </button>
+    <>
+      <button type="button" onClick={save} className="w-full rounded-[3px] bg-gold py-4 text-lg font-semibold tracking-[0.1em] text-noir">
+        Save photo
+      </button>
+      {(showGone || photo.state === "gone") && (
+        <p role="alert" className="text-center text-ivory">
+          This photo has been deleted
+        </p>
+      )}
+    </>
   );
 }

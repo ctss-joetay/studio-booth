@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { cropRect, rotatedSize } from "@/lib/client/capture";
-import { DEFAULT_SETTINGS, loadSettings, parseSettings, saveSettings } from "@/lib/client/settings";
+import { DEFAULT_SETTINGS, ROTATION_CHOICES, loadSettings, parseSettings, saveSettings } from "@/lib/client/settings";
 import { STYLES } from "@/lib/styles";
 
 describe("framing the camera", () => {
@@ -84,5 +84,17 @@ describe("booth settings on the iPad", () => {
     };
     expect(loadSettings(broken)).toEqual(DEFAULT_SETTINGS);
     expect(() => saveSettings(DEFAULT_SETTINGS, broken)).not.toThrow();
+  });
+});
+
+describe("camera mounting choices", () => {
+  it("say which way round the photos come out: a camera on its side gives portrait photos", () => {
+    const label = (r: number) => ROTATION_CHOICES.find((c) => c.value === r)!.label;
+    expect(ROTATION_CHOICES.map((c) => c.value).sort()).toEqual([0, 180, 270, 90].sort());
+    expect(label(0)).toMatch(/landscape/i);
+    expect(label(0)).toMatch(/groups/i);
+    expect(label(90)).toMatch(/portrait/i);
+    expect(label(270)).toMatch(/portrait/i);
+    expect(label(180)).toMatch(/landscape/i);
   });
 });

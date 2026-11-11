@@ -4,15 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { CameraView, type CameraInfo } from "@/components/CameraView";
 import { PinGate } from "@/components/PinGate";
-import { DEFAULT_SETTINGS, loadSettings, parseSettings, saveSettings, type BoothSettings, type Rotation } from "@/lib/client/settings";
+import { DEFAULT_SETTINGS, ROTATION_CHOICES, loadSettings, parseSettings, saveSettings, type BoothSettings, type Rotation } from "@/lib/client/settings";
 import { STYLES, type StyleId } from "@/lib/styles";
-
-const ROTATIONS: { value: Rotation; label: string }[] = [
-  { value: 0, label: "Upright (0°)" },
-  { value: 90, label: "Sideways, turned right (90°)" },
-  { value: 270, label: "Sideways, turned left (270°)" },
-  { value: 180, label: "Upside down (180°)" },
-];
 
 interface AiTest {
   ok: boolean;
@@ -23,24 +16,29 @@ interface AiTest {
 
 /** Student helpers: camera, mounting, timer, event name, styles and an AI check. Saved on this iPad. */
 export default function SetupPage() {
-  const [unlocked, setUnlocked] = useState<boolean | null>(null);
+  // Setup always asks for the PIN, even on the unlocked booth iPad, so guests can't wander in.
+  const [unlocked, setUnlocked] = useState(false);
   const [settings, setSettings] = useState<BoothSettings>(DEFAULT_SETTINGS);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [info, setInfo] = useState<CameraInfo | null>(null);
   const [aiTest, setAiTest] = useState<AiTest | "running" | null>(null);
 
+  // Typed fields keep exactly what's typed; they are cleaned and saved when the helper leaves the field.
+  const [eventName, setEventName] = useState("");
+  const [countdown, setCountdown] = useState(String(DEFAULT_SETTINGS.countdown));
+
   useEffect(() => {
-    setSettings(loadSettings());
-    fetch("/api/session")
-      .then((r) => r.json())
-      .then((b: { unlocked?: boolean }) => setUnlocked(!!b.unlocked))
-      .catch(() => setUnlocked(false));
+    const loaded = loadSettings();
+    setSettings(loaded);
+    setEventName(loaded.eventName);
+    setCountdown(String(loaded.countdown));
   }, []);
 
   const update = (change: Partial<BoothSettings>) => {
     const next = parseSettings({ ...settings, ...change });
     setSettings(next);
     saveSettings(next);
+    return next;
   };
 
   // Camera names only appear once the browser has been allowed to use a camera.
@@ -68,8 +66,7 @@ export default function SetupPage() {
     if (enabled.length) update({ enabledStyles: enabled });
   };
 
-  if (unlocked === null) return <main className="fixed inset-0 bg-noir" />;
-  if (!unlocked) return <PinGate title="Booth setup" onUnlocked={() => setUnlocked(true)} />;
+  if (!unlocked) return <PinGate title="Helper setup" onUnlocked={() => setUnlocked(true)} />;
 
   return (
     <main className="fade-in min-h-full bg-noir px-6 py-6 select-text">
@@ -91,7 +88,7 @@ export default function SetupPage() {
           </p>
           <p className="text-xs leading-relaxed text-muted">
             A Canon on USB-C must act as a USB webcam (iPadOS 17 or later). If it isn&apos;t listed, use an HDMI-to-USB-C capture adapter, or
-            pick the iPad&apos;s own camera for now. Upright suits one or two people; sideways suits groups.
+            pick the iPad&apos;s own camera for now. A camera on its side gives portrait photos (one or two people); standing normally gives landscape photos (groups).
           </p>
         </section>
 
@@ -121,7 +118,7 @@ export default function SetupPage() {
               onChange={(e) => update({ rotation: Number(e.target.value) as Rotation })}
               className="w-full rounded-[3px] border border-line bg-noir-2 px-3 py-3 text-ivory"
             >
-              {ROTATIONS.map((r) => (
+              {ROTATION_CHOICES.map((r) => (
                 <option key={r.value} value={r.value}>
                   {r.label}
                 </option>
@@ -142,8 +139,9 @@ export default function SetupPage() {
                 type="number"
                 min={1}
                 max={30}
-                value={settings.countdown}
-                onChange={(e) => update({ countdown: Number(e.target.value) })}
+                value={countdown}
+                onChange={(e) => setCountdown(e.target.value)}
+                onBlur={() => setCountdown(String(update({ countdown: Number(countdown) || DEFAULT_SETTINGS.countdown }).countdown))}
                 className="w-full rounded-[3px] border border-line bg-noir-2 px-3 py-3 text-ivory"
               />
             </label>
@@ -153,8 +151,9 @@ export default function SetupPage() {
                 aria-label="Event name"
                 maxLength={40}
                 placeholder="Open House"
-                value={settings.eventName}
-                onChange={(e) => update({ eventName: e.target.value })}
+                value={eventName}
+                onChange={(e) => setEventName(e.target.value)}
+                onBlur={() => setEventName(update({ eventName }).eventName)}
                 className="w-full rounded-[3px] border border-line bg-noir-2 px-3 py-3 text-ivory"
               />
             </label>

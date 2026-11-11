@@ -15,6 +15,17 @@ export interface BoothSettings {
 
 export const SETTINGS_KEY = "studio-booth-settings";
 
+/**
+ * How the camera sits on its stand. A camera standing normally gives landscape photos (best for groups); turned on
+ * its side it gives portrait photos (best for one or two people).
+ */
+export const ROTATION_CHOICES: { value: Rotation; label: string }[] = [
+  { value: 0, label: "Standing normally — landscape photos, best for groups" },
+  { value: 90, label: "On its side, turned right — portrait photos, best for 1–2 people" },
+  { value: 270, label: "On its side, turned left — portrait photos, best for 1–2 people" },
+  { value: 180, label: "Upside down — landscape photos" },
+];
+
 export const DEFAULT_SETTINGS: BoothSettings = {
   cameraId: null,
   rotation: 0,
