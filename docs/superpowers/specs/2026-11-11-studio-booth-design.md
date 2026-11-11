@@ -199,17 +199,18 @@ Every prompt contains, in this order:
   and `iron-session`, plus Vitest and Playwright, on Node 22. It reuses Photo Editor's OpenRouter Images API
   client (`aspect_ratio: "auto"`, typed errors, fake mode).
 - **No database.**
-  - Each photo is stored as two files on a Railway volume (`DATA_DIR`): `<id>.jpg`, plus `<id>.json` holding the
-    token, style, created time, first download time and expiry.
+  - Each photo is stored as two files on a Railway volume (`DATA_DIR/shots`): `<token>.jpg`, plus `<token>.json`
+    holding the style, created time and first download time. One random token per photo names the files, the
+    guest link and the booth's own requests, which also need the PIN.
   - A cleanup timer runs every minute and also once at start-up.
   - The service runs as a single replica.
 - **API (all booth calls need the PIN cookie):**
   - `POST /api/session`: PIN → cookie.
   - `POST /api/shots`: the captured JPEG plus style, backdrop, framing and event name, all checked. It prepares
     the image (upright, ≤ 2048 px), builds the prompt, calls the model, adds any overlay, stores the result and
-    returns `{ id, imageUrl, downloadUrl }`.
-  - `GET /api/shots/:id/image`: the result, for the booth screen only.
-  - `DELETE /api/shots/:id`: used by Retake.
+    returns `{ token, imageUrl, downloadUrl, qrSvg }`.
+  - `GET /api/shots/:token/image`: the result, for the booth screen only.
+  - `DELETE /api/shots/:token`: used by Retake.
   - `GET /p/:token`: the guest page. `GET /api/p/:token/image` serves the photo and records the first download.
 - **The QR code** is drawn on the server as SVG, from `PUBLIC_URL` (falling back to the request's own address).
 - **Limits:**
