@@ -48,3 +48,78 @@ body {
   text-transform: uppercase;
   color: var(--color-muted);
 }
+
+/* Motion: calm, unhurried. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-in {
+  animation: fade-in 300ms ease-out both;
+}
+
+@keyframes flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.flash {
+  animation: flash 450ms ease-out forwards;
+}
+
+@keyframes shimmer {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(120%);
+  }
+}
+.shimmer {
+  background: linear-gradient(100deg, transparent 30%, rgba(200, 169, 106, 0.35) 50%, transparent 70%);
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* Eases towards 90% over 40 s; the real finish jumps it to the result screen. */
+@keyframes develop {
+  from {
+    width: 2%;
+  }
+  to {
+    width: 90%;
+  }
+}
+.develop-bar {
+  animation: develop 40s cubic-bezier(0.1, 0.6, 0.2, 1) forwards;
+}
+
+@keyframes tick {
+  from {
+    transform: scale(1.18);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.tick {
+  animation: tick 350ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .tick,
+  .shimmer {
+    animation: none;
+  }
+}

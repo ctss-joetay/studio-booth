@@ -3,6 +3,8 @@ import sharp, { type OverlayOptions } from "sharp";
 import { FONT_REGULAR, FONT_SEMIBOLD } from "./config";
 import type { StyleDef } from "./styles";
 
+export { cleanEventName } from "./text";
+
 /** Made-up titles only: never a real magazine's name. */
 export const MASTHEADS = ["ICON", "GLAM", "LUXE", "MUSE", "ÉLAN", "VERVE"] as const;
 
@@ -12,16 +14,8 @@ export interface OverlayContext {
   random?: () => number;
 }
 
-const MAX_EVENT_NAME = 40;
 const POLAROID_PAPER = "#fbfbf8";
 const POLAROID_INK = "#2a2a2e";
-
-/** The event name from Setup, safe to print: no control characters, single spaces, at most 40 characters. */
-export function cleanEventName(raw: unknown): string {
-  if (typeof raw !== "string") return "";
-  const clean = raw.replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim();
-  return Array.from(clean).slice(0, MAX_EVENT_NAME).join("");
-}
 
 export function polaroidBorder(width: number): { side: number; top: number; bottom: number } {
   const side = Math.round(0.06 * width);
