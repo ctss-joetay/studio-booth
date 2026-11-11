@@ -30,3 +30,15 @@ export async function sizeOf(image: Buffer): Promise<{ width: number; height: nu
 
 export const isRed = (p: Rgb) => p.r > 150 && p.g < 120 && p.b < 120;
 export const isWhite = (p: Rgb) => p.r > 230 && p.g > 230 && p.b > 230;
+
+/** The brightest red value in the rows between two fractions of the height (0 = top, 1 = bottom). */
+export async function brightestInBand(image: Buffer, fromFrac: number, toFrac: number): Promise<number> {
+  const { data, info } = await sharp(image).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const from = Math.floor(info.height * fromFrac);
+  const to = Math.ceil(info.height * toFrac);
+  let max = 0;
+  for (let y = from; y < to; y++) {
+    for (let x = 0; x < info.width; x++) max = Math.max(max, data[(y * info.width + x) * info.channels]);
+  }
+  return max;
+}
