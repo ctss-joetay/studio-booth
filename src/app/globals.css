@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Bodoni Moda";
+  src: url("/fonts/BodoniModa_400Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Bodoni Moda";
+  src: url("/fonts/BodoniModa_600SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+
+@theme {
+  --color-noir: #0e0e10;
+  --color-noir-2: #18181b;
+  --color-ivory: #f3efe7;
+  --color-muted: #9a958c;
+  --color-line: #2a2a2e;
+  --color-gold: #c8a96a;
+  --font-display: "Bodoni Moda", Didot, "Bodoni 72", Georgia, serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", system-ui, sans-serif;
+  --radius-studio: 3px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--color-noir);
+  color: var(--color-ivory);
+  font-family: var(--font-sans);
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Kicker labels: small, spaced capitals in the muted colour. */
+.kicker {
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
