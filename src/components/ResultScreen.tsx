@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { AI_NOTICE } from "./ChooseScreen";
+import { AI_NOTICE } from "@/lib/copy";
 
 export interface Shot {
   token: string;

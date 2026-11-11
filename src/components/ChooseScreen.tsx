@@ -2,9 +2,8 @@
 
 import { useRef } from "react";
 import { BACKDROPS, type BackdropId, type Framing, type StyleDef, type StyleId } from "@/lib/styles";
+import { AI_NOTICE } from "@/lib/copy";
 import { StyleTile } from "./StyleTile";
-
-export const AI_NOTICE = "Your photo is edited by an AI service and deleted within 1 hour.";
 
 interface Props {
   styles: StyleDef[];
