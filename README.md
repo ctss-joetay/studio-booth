@@ -62,7 +62,8 @@ npm run typecheck
 | Setting | What it does |
 |---|---|
 | Camera | Which camera the booth uses |
-| Camera mounting | How the camera sits on its stand. **Standing normally:** landscape photos, best for groups. **On its side:** portrait photos, best for 1–2 people. The live view always shows the photo's real shape. |
+| Photo shape | **Landscape (3:2)**, the default, best for groups, or **Portrait (2:3)**, best for 1–2 people. Every photo comes out this shape, whatever camera is used; the live view shows exactly what will be kept. If the camera's own picture is the other way round, Setup warns you: the photo is then cut from the middle and shows less, so turn the camera round if you can. |
+| Camera mounting | Only for a camera that doesn't turn its own picture, like a Canon on its side: tell the booth which way it's turned. Phones and iPads stay on **Upright**. |
 | Mirror the live view | Guests see themselves as in a mirror. The photo itself is never mirrored. |
 | Countdown seconds | 10 by default |
 | Event name | Appears in the Magazine headlines and on Polaroid frames |
@@ -92,20 +93,27 @@ Practice mode can't show whether the AI keeps faces accurate. With a working key
 2. In Railway, create **New Project → Deploy from GitHub repo**. `railway.json` sets the start command and the
    health check.
 3. Add a **Volume** mounted at `/data`.
-4. Under **Variables**:
+4. Under **Settings → Networking**, choose **Generate Domain**. Railway gives you an address such as
+   `https://studio-booth-production.up.railway.app`. This is the address you open on the iPad, and the one the QR
+   codes send guests' phones to.
+5. Under **Variables**, add these four:
 
    | Variable | Value |
    |---|---|
    | `OPENROUTER_API_KEY` | your key from https://openrouter.ai/keys |
-   | `BOOTH_PIN` | the PIN helpers will use |
+   | `BOOTH_PIN` | the PIN helpers will use. Choose your own: 2468 is the example in this public repo. |
    | `SESSION_SECRET` | 32+ random characters (`openssl rand -base64 48`) |
    | `DATA_DIR` | `/data` |
-   | `PUBLIC_URL` | the `https://…up.railway.app` address, used in QR codes |
-   | `SEEDREAM_MODEL` | optional, `bytedance-seed/seedream-5-0-flash` by default |
-   | `MAX_SHOTS_PER_HOUR` | optional, 150 by default: a cap on AI calls so a crowd can't run up the bill |
-   | `TZ` | `Asia/Singapore`, so the dates on Magazine covers and Polaroids are local |
 
-5. Under **Settings → Networking**, choose **Generate Domain**.
+   These are optional:
+
+   | Variable | Value | What it does |
+   |---|---|---|
+   | `TZ` | `Asia/Singapore` | Railway runs on UTC, 8 hours behind Singapore. Without this, a photo taken between midnight and 8 am shows yesterday's date on Magazine covers, Polaroids and the downloaded file name. |
+   | `PUBLIC_URL` | the address from step 4 | The start of every QR code link. Left blank, the app uses the address the iPad opened, which on Railway is the same. Set it only if the iPad opens the booth at an address guests' phones can't reach. |
+   | `MAX_SHOTS_PER_HOUR` | `150` by default | A cap on AI calls, so a crowd can't run up the bill. |
+   | `SEEDREAM_MODEL` | `bytedance-seed/seedream-5-0-flash` by default | The AI model that edits the photos. |
+
 6. Keep **one replica**: the booth's busy flag and the photos live on one server.
 
 Changing `BOOTH_PIN` locks every iPad until it is unlocked again.

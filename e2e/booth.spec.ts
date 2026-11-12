@@ -187,3 +187,41 @@ test("the booth needs the PIN", async ({ page }) => {
   const res = await page.request.post("/api/shots", { multipart: { style: "bw", backdrop: "grey", framing: "full" } });
   expect(res.status()).toBe(401);
 });
+
+const frameRatio = async (page: Page) => {
+  const box = (await page.getByTestId("camera-frame").boundingBox())!;
+  return box.width / box.height;
+};
+
+test("photos come out in the shape chosen in Setup, whatever shape the camera sends", async ({ page }) => {
+  // Chrome's fake camera sends landscape pictures; the booth is set to portrait.
+  await openBooth(page, { shape: "portrait" });
+  await expect.poll(() => frameRatio(page)).toBeCloseTo(2 / 3, 2);
+
+  await takePhoto(page);
+  const photo = page.getByRole("img", { name: "Your portrait" });
+  await expect.poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  const size = await photo.evaluate((img: HTMLImageElement) => ({ w: img.naturalWidth, h: img.naturalHeight }));
+  expect(size.w / size.h).toBeCloseTo(2 / 3, 1);
+});
+
+test("the booth takes landscape photos unless Setup says otherwise", async ({ page }) => {
+  await openBooth(page);
+  await expect.poll(() => frameRatio(page)).toBeCloseTo(3 / 2, 2);
+});
+
+test("Setup warns when the camera's picture is the other way round from the photo shape", async ({ page }) => {
+  await openBooth(page);
+  await openSetup(page);
+  const shape = page.getByLabel("Photo shape");
+  await expect(shape).toHaveValue("landscape");
+  await expect(page.getByTestId("camera-info")).toHaveText(/\d+ × \d+/);
+  await expect(page.getByTestId("shape-warning")).toHaveCount(0);
+
+  await shape.selectOption("portrait");
+  await expect(page.getByTestId("shape-warning")).toHaveText(/sending landscape pictures/);
+  await expect.poll(() => frameRatio(page)).toBeCloseTo(2 / 3, 2);
+
+  await page.goto("/");
+  await expect.poll(() => frameRatio(page)).toBeCloseTo(2 / 3, 2);
+});

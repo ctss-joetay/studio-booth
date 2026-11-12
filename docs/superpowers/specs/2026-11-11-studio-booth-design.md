@@ -119,9 +119,12 @@ zoom in would rebuild faces from too few pixels, and that is exactly the identit
 doesn't show full bodies, the AI never invents legs or shoes (funbooth's finding).
 
 **Groups:** any number of people works. About 1–5 is ideal, because faces get small beyond that. The frame
-shape follows how the camera is mounted:
-- camera turned on its side: a 2:3 portrait photo, best for 1–2 people;
-- camera standing normally: a 3:2 landscape photo, best for groups.
+shape is a Setup choice (changed 2026-11-12: it used to follow the camera's own picture, so a Mac picking an upright
+iPhone through Continuity Camera gave portrait photos unasked):
+- **Landscape**, the default: a 3:2 photo, best for groups;
+- **Portrait:** a 2:3 photo, best for 1–2 people.
+The booth cuts the largest centred area of that shape from whatever the camera sends, and Setup warns when the
+camera's picture is the other way round, because the photo is then a narrow strip from its middle.
 
 ## 6. What every AI request must say
 
@@ -178,8 +181,9 @@ Every prompt contains, in this order:
 - Students reach **Setup** by long-pressing the THE STUDIO brand line, then entering the PIN. Setup has:
   - **Camera:** a list of every camera the browser sees, such as "Canon EOS …", "Front Camera" and "Back Camera",
     with a live preview.
-  - **Camera mounting:** standing normally or on its side, as rotation 0 / 90 / 180 / 270°. It also decides portrait or
-    landscape photos (§5).
+  - **Photo shape:** landscape (default) or portrait (§5).
+  - **Camera mounting:** upright or on its side, as rotation 0 / 90 / 180 / 270°, for a camera that doesn't turn its
+    own picture (a Canon on its side). Phones and iPads stay upright.
   - **Mirror the live view** (on by default). The captured photo is never mirrored.
   - **Countdown seconds** (default 10).
   - **Event name**, used in the Magazine headlines and on the Polaroid border.

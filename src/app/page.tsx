@@ -99,7 +99,7 @@ export default function BoothPage() {
       return setPhase("error");
     }
     try {
-      const blob = await captureFrame(video, settings.rotation);
+      const blob = await captureFrame(video, settings.rotation, settings.shape);
       lastCapture.current = blob;
       setCaptureUrl(URL.createObjectURL(blob));
       await upload(blob);
@@ -107,7 +107,7 @@ export default function BoothPage() {
       setFailure({ message: "The camera couldn't take the photo. Try again." });
       setPhase("error");
     }
-  }, [video, settings.rotation, upload, forgetCapture]);
+  }, [video, settings.rotation, settings.shape, upload, forgetCapture]);
 
   const startCountdown = () => {
     // A tap starts the audio, so the shutter can click when the countdown ends.
@@ -138,6 +138,7 @@ export default function BoothPage() {
           <CameraView
             deviceId={settings.cameraId}
             rotation={settings.rotation}
+            shape={settings.shape}
             mirror={settings.mirror}
             framing={phase === "choose" || phase === "countdown" ? framing : null}
             hint={phase === "choose"}

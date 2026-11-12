@@ -4,7 +4,18 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { CameraView, type CameraInfo } from "@/components/CameraView";
 import { PinGate } from "@/components/PinGate";
-import { DEFAULT_SETTINGS, ROTATION_CHOICES, loadSettings, parseSettings, saveSettings, type BoothSettings, type Rotation } from "@/lib/client/settings";
+import { pictureShape, rotatedSize } from "@/lib/client/capture";
+import {
+  DEFAULT_SETTINGS,
+  ROTATION_CHOICES,
+  SHAPE_CHOICES,
+  loadSettings,
+  parseSettings,
+  saveSettings,
+  type BoothSettings,
+  type PhotoShape,
+  type Rotation,
+} from "@/lib/client/settings";
 import { STYLES, type StyleId } from "@/lib/styles";
 
 interface AiTest {
@@ -68,6 +79,10 @@ export default function SetupPage() {
 
   if (!unlocked) return <PinGate title="Helper setup" onUnlocked={() => setUnlocked(true)} />;
 
+  // A camera whose picture is the other way round still works, but each photo is a narrow strip from its middle.
+  const upright = info ? rotatedSize(info.width, info.height, settings.rotation) : null;
+  const cameraShape = upright ? pictureShape(upright.w, upright.h) : null;
+
   return (
     <main className="fade-in min-h-full bg-noir px-6 py-6 select-text">
       <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.1fr_1fr]">
@@ -77,6 +92,7 @@ export default function SetupPage() {
           <CameraView
             deviceId={settings.cameraId}
             rotation={settings.rotation}
+            shape={settings.shape}
             mirror={settings.mirror}
             framing="full"
             onReady={(video) => video && void listCameras()}
@@ -86,9 +102,15 @@ export default function SetupPage() {
           <p className="text-sm text-muted" data-testid="camera-info">
             {info ? `${info.label} · ${info.width} × ${info.height}` : "No camera running"}
           </p>
+          {cameraShape && cameraShape !== settings.shape && (
+            <p data-testid="shape-warning" className="rounded-[3px] border border-gold/60 px-3 py-2 text-sm leading-relaxed text-ivory">
+              This camera is sending {cameraShape} pictures, so each {settings.shape} photo is cut from the middle and shows less. For the
+              best photos, turn the camera so its picture is {settings.shape} too, or change the photo shape.
+            </p>
+          )}
           <p className="text-xs leading-relaxed text-muted">
             A Canon on USB-C must act as a USB webcam (iPadOS 17 or later). If it isn&apos;t listed, use an HDMI-to-USB-C capture adapter, or
-            pick the iPad&apos;s own camera for now. A camera on its side gives portrait photos (one or two people); standing normally gives landscape photos (groups).
+            pick the iPad&apos;s own camera for now.
           </p>
         </section>
 
@@ -111,6 +133,22 @@ export default function SetupPage() {
           </label>
 
           <label className="block space-y-2">
+            <span className="kicker block">Photo shape</span>
+            <select
+              aria-label="Photo shape"
+              value={settings.shape}
+              onChange={(e) => update({ shape: e.target.value as PhotoShape })}
+              className="w-full rounded-[3px] border border-line bg-noir-2 px-3 py-3 text-ivory"
+            >
+              {SHAPE_CHOICES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block space-y-2">
             <span className="kicker block">Camera mounting</span>
             <select
               aria-label="Camera mounting"
@@ -124,6 +162,10 @@ export default function SetupPage() {
                 </option>
               ))}
             </select>
+            <span className="block text-xs leading-relaxed text-muted">
+              Only for a camera that doesn&apos;t turn its own picture, like a Canon mounted on its side. If the live view looks sideways, change
+              this.
+            </span>
           </label>
 
           <label className="flex items-center gap-3">

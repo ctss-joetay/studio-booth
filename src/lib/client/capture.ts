@@ -1,4 +1,4 @@
-import type { Rotation } from "./settings";
+import type { PhotoShape, Rotation } from "./settings";
 
 export interface Crop {
   sx: number;
@@ -11,9 +11,14 @@ export function rotatedSize(w: number, h: number, rotation: Rotation): { w: numb
   return rotation === 90 || rotation === 270 ? { w: h, h: w } : { w, h };
 }
 
-/** The largest centred 2:3 area of a portrait frame, or 3:2 area of a landscape one. */
-export function cropRect(w: number, h: number): Crop {
-  const target = h > w ? 2 / 3 : 3 / 2;
+/** Which way round the camera's own picture is (square counts as landscape). */
+export function pictureShape(w: number, h: number): PhotoShape {
+  return h > w ? "portrait" : "landscape";
+}
+
+/** The largest centred 3:2 area for a landscape photo, or 2:3 area for a portrait one, of any frame. */
+export function cropRect(w: number, h: number, shape: PhotoShape): Crop {
+  const target = shape === "portrait" ? 2 / 3 : 3 / 2;
   if (w / h > target) {
     const sw = Math.round(h * target);
     return { sx: Math.round((w - sw) / 2), sy: 0, sw, sh: h };
@@ -22,12 +27,12 @@ export function cropRect(w: number, h: number): Crop {
   return { sx: 0, sy: Math.round((h - sh) / 2), sw: w, sh };
 }
 
-/** The photo exactly as the guests saw it framed, upright and never mirrored, as a JPEG. */
-export function captureFrame(video: HTMLVideoElement, rotation: Rotation, quality = 0.92): Promise<Blob> {
+/** The photo exactly as the guests saw it framed, upright, in the chosen shape and never mirrored, as a JPEG. */
+export function captureFrame(video: HTMLVideoElement, rotation: Rotation, shape: PhotoShape, quality = 0.92): Promise<Blob> {
   const vw = video.videoWidth;
   const vh = video.videoHeight;
   const { w, h } = rotatedSize(vw, vh, rotation);
-  const crop = cropRect(w, h);
+  const crop = cropRect(w, h, shape);
   const canvas = document.createElement("canvas");
   canvas.width = crop.sw;
   canvas.height = crop.sh;

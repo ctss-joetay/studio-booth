@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { cropRect, rotatedSize } from "@/lib/client/capture";
-import type { Rotation } from "@/lib/client/settings";
+import type { PhotoShape, Rotation } from "@/lib/client/settings";
 import type { Framing } from "@/lib/styles";
 
 export interface CameraInfo {
@@ -14,6 +13,8 @@ export interface CameraInfo {
 interface Props {
   deviceId: string | null;
   rotation: Rotation;
+  /** The shape of the photo; the view shows exactly the part of the picture that will be kept. */
+  shape: PhotoShape;
   mirror: boolean;
   /** Shows head/feet or head/waist guide lines; null hides them. */
   framing: Framing | null;
@@ -30,16 +31,15 @@ const GUIDES: Record<Framing, { bottom: string; hint: string }> = {
 };
 
 /**
- * The live camera, framed exactly like the photo it will take (2:3 upright, 3:2 sideways), rotated for how the
- * camera is mounted and mirrored like a mirror. The captured photo is never mirrored.
+ * The live camera, framed exactly like the photo it will take (3:2 landscape or 2:3 portrait, cut from the centre),
+ * rotated for how the camera is mounted and mirrored like a mirror. The captured photo is never mirrored.
  */
-export function CameraView({ deviceId, rotation, mirror, framing, hint = true, onReady, onInfo, className = "" }: Props) {
+export function CameraView({ deviceId, rotation, shape, mirror, framing, hint = true, onReady, onInfo, className = "" }: Props) {
   const outerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const callbacks = useRef({ onReady, onInfo });
   callbacks.current = { onReady, onInfo };
   const [status, setStatus] = useState<"starting" | "live" | "failed">("starting");
-  const [frame, setFrame] = useState<{ vw: number; vh: number } | null>(null);
   const [outer, setOuter] = useState({ w: 0, h: 0 });
   const [attempt, setAttempt] = useState(0);
 
@@ -83,7 +83,6 @@ export function CameraView({ deviceId, rotation, mirror, framing, hint = true, o
         if (!el.videoWidth) await new Promise((resolve) => el.addEventListener("loadedmetadata", resolve, { once: true }));
         await el.play().catch(() => undefined);
         if (cancelled) return;
-        setFrame({ vw: el.videoWidth, vh: el.videoHeight });
         setStatus("live");
         callbacks.current.onReady(el);
         const track = stream.getVideoTracks()[0];
@@ -106,17 +105,16 @@ export function CameraView({ deviceId, rotation, mirror, framing, hint = true, o
     };
   }, [deviceId, attempt]);
 
-  // The visible box has the photo's shape and fits inside the space this view is given.
+  // The visible box has the photo's shape and fits inside the space this view is given. The video covers it from
+  // the centre, which is exactly the part captureFrame keeps.
   const sideways = rotation === 90 || rotation === 270;
-  const rotated = frame ? rotatedSize(frame.vw, frame.vh, rotation) : sideways ? { w: 2, h: 3 } : { w: 3, h: 2 };
-  const crop = cropRect(rotated.w, rotated.h);
-  const aspect = crop.sw / crop.sh;
+  const aspect = shape === "portrait" ? 2 / 3 : 3 / 2;
   const inner = outer.w / outer.h > aspect ? { w: outer.h * aspect, h: outer.h } : { w: outer.w, h: outer.w / aspect };
   const guide = framing ? GUIDES[framing] : null;
 
   return (
     <div ref={outerRef} data-testid="camera" className={`relative flex items-center justify-center overflow-hidden bg-black ${className}`}>
-      <div className="relative overflow-hidden bg-[#111]" style={{ width: inner.w, height: inner.h }}>
+      <div data-testid="camera-frame" className="relative overflow-hidden bg-[#111]" style={{ width: inner.w, height: inner.h }}>
         <video
           ref={videoRef}
           playsInline

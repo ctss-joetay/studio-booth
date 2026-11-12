@@ -1,14 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { cropRect, rotatedSize } from "@/lib/client/capture";
-import { DEFAULT_SETTINGS, ROTATION_CHOICES, loadSettings, parseSettings, saveSettings } from "@/lib/client/settings";
+import { cropRect, pictureShape, rotatedSize } from "@/lib/client/capture";
+import { DEFAULT_SETTINGS, ROTATION_CHOICES, SHAPE_CHOICES, loadSettings, parseSettings, saveSettings } from "@/lib/client/settings";
 import { STYLES } from "@/lib/styles";
 
 describe("framing the camera", () => {
-  it("crops a landscape frame to 3:2 and a portrait frame to 2:3, centred", () => {
-    expect(cropRect(1920, 1080)).toEqual({ sx: 150, sy: 0, sw: 1620, sh: 1080 });
-    expect(cropRect(1080, 1920)).toEqual({ sx: 0, sy: 150, sw: 1080, sh: 1620 });
-    expect(cropRect(1500, 1000)).toEqual({ sx: 0, sy: 0, sw: 1500, sh: 1000 });
-    expect(cropRect(1000, 1000)).toEqual({ sx: 0, sy: 167, sw: 1000, sh: 667 });
+  it("cuts the largest centred 3:2 area for landscape photos, whatever shape the camera sends", () => {
+    expect(cropRect(1920, 1080, "landscape")).toEqual({ sx: 150, sy: 0, sw: 1620, sh: 1080 });
+    expect(cropRect(1080, 1920, "landscape")).toEqual({ sx: 0, sy: 600, sw: 1080, sh: 720 });
+    expect(cropRect(1500, 1000, "landscape")).toEqual({ sx: 0, sy: 0, sw: 1500, sh: 1000 });
+    expect(cropRect(1000, 1000, "landscape")).toEqual({ sx: 0, sy: 167, sw: 1000, sh: 667 });
+  });
+
+  it("cuts the largest centred 2:3 area for portrait photos, whatever shape the camera sends", () => {
+    expect(cropRect(1080, 1920, "portrait")).toEqual({ sx: 0, sy: 150, sw: 1080, sh: 1620 });
+    expect(cropRect(1920, 1080, "portrait")).toEqual({ sx: 600, sy: 0, sw: 720, sh: 1080 });
+    expect(cropRect(1000, 1500, "portrait")).toEqual({ sx: 0, sy: 0, sw: 1000, sh: 1500 });
+    expect(cropRect(1000, 1000, "portrait")).toEqual({ sx: 167, sy: 0, sw: 667, sh: 1000 });
+  });
+
+  it("tells whether the camera itself sends portrait or landscape pictures", () => {
+    expect(pictureShape(1920, 1080)).toBe("landscape");
+    expect(pictureShape(1080, 1920)).toBe("portrait");
+    expect(pictureShape(1000, 1000)).toBe("landscape");
   });
 
   it("swaps width and height for a camera mounted sideways", () => {
@@ -34,10 +47,11 @@ function memoryStorage(initial: Record<string, string> = {}): Storage {
 }
 
 describe("booth settings on the iPad", () => {
-  it("starts with a 10-second timer, a mirrored view and every style", () => {
+  it("starts with landscape photos, a 10-second timer, a mirrored view and every style", () => {
     expect(DEFAULT_SETTINGS).toEqual({
       cameraId: null,
       rotation: 0,
+      shape: "landscape",
       mirror: true,
       countdown: 10,
       eventName: "",
@@ -49,8 +63,13 @@ describe("booth settings on the iPad", () => {
     expect(parseSettings(null)).toEqual(DEFAULT_SETTINGS);
     expect(parseSettings("nonsense")).toEqual(DEFAULT_SETTINGS);
     expect(loadSettings(memoryStorage({ "studio-booth-settings": "{not json" }))).toEqual(DEFAULT_SETTINGS);
-    const odd = parseSettings({ rotation: 45, mirror: "yes", countdown: 0, cameraId: 7, enabledStyles: ["vogue"] });
+    const odd = parseSettings({ rotation: 45, shape: "round", mirror: "yes", countdown: 0, cameraId: 7, enabledStyles: ["vogue"] });
     expect(odd).toEqual({ ...DEFAULT_SETTINGS, countdown: 1 });
+  });
+
+  it("keeps a portrait photo shape", () => {
+    expect(parseSettings({ shape: "portrait" }).shape).toBe("portrait");
+    expect(parseSettings({ shape: "landscape" }).shape).toBe("landscape");
   });
 
   it("keeps the countdown between 1 and 30 seconds", () => {
@@ -69,7 +88,14 @@ describe("booth settings on the iPad", () => {
 
   it("saves and loads", () => {
     const storage = memoryStorage();
-    const mine = { ...DEFAULT_SETTINGS, cameraId: "canon-1", rotation: 90 as const, countdown: 5, eventName: "Open House" };
+    const mine = {
+      ...DEFAULT_SETTINGS,
+      cameraId: "canon-1",
+      rotation: 90 as const,
+      shape: "portrait" as const,
+      countdown: 5,
+      eventName: "Open House",
+    };
     saveSettings(mine, storage);
     expect(loadSettings(storage)).toEqual(mine);
   });
@@ -87,14 +113,22 @@ describe("booth settings on the iPad", () => {
   });
 });
 
+describe("photo shape choices", () => {
+  it("offer landscape for groups first and portrait for one or two people", () => {
+    expect(SHAPE_CHOICES.map((c) => c.value)).toEqual(["landscape", "portrait"]);
+    expect(SHAPE_CHOICES[0].label).toMatch(/landscape.*groups/i);
+    expect(SHAPE_CHOICES[1].label).toMatch(/portrait.*1–2 people/i);
+  });
+});
+
 describe("camera mounting choices", () => {
-  it("say which way round the photos come out: a camera on its side gives portrait photos", () => {
+  it("only say how the camera sits, because the photo shape is chosen separately", () => {
     const label = (r: number) => ROTATION_CHOICES.find((c) => c.value === r)!.label;
     expect(ROTATION_CHOICES.map((c) => c.value).sort()).toEqual([0, 180, 270, 90].sort());
-    expect(label(0)).toMatch(/landscape/i);
-    expect(label(0)).toMatch(/groups/i);
-    expect(label(90)).toMatch(/portrait/i);
-    expect(label(270)).toMatch(/portrait/i);
-    expect(label(180)).toMatch(/landscape/i);
+    expect(label(0)).toMatch(/upright/i);
+    expect(label(0)).toMatch(/phones and iPads/i);
+    expect(label(90)).toMatch(/on its side/i);
+    expect(label(270)).toMatch(/on its side/i);
+    for (const choice of ROTATION_CHOICES) expect(choice.label).not.toMatch(/landscape|portrait/i);
   });
 });
